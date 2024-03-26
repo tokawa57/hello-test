@@ -4,8 +4,24 @@ import altair as alt
 import ccxt
 from datetime import datetime, timedelta
 
+st.set_page_config(
+    page_title="Funding Rate Dashboard",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-@st.cache_data(ttl=300, show_spinner=False)
+# CSSを使ってデザインをカスタマイズ
+st.markdown("""
+    <style>
+    .big-font {
+        font-size:18px !important;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+@st.cache_data(ttl=600, show_spinner=False)
 def fetch_all_funding_rate(exchange_name: str) -> dict:
     try:
         exchange = getattr(ccxt, exchange_name)()
@@ -31,7 +47,7 @@ def fetch_all_funding_rate(exchange_name: str) -> dict:
         return {}
 
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=600, show_spinner=False)
 def fetch_funding_rate_history(exchange_name: str, symbol: str) -> pd.DataFrame:
     exchange = getattr(ccxt, exchange_name)()
     history = exchange.fetch_funding_rate_history(symbol)
@@ -51,12 +67,22 @@ def display_funding_rates(exchange_name, top_n):
         symbols, rates = zip(*rates_sorted)
 
         df = pd.DataFrame({'Symbol': symbols, 'Funding Rate': rates})
-        chart = alt.Chart(df).mark_bar().encode(
-            x=alt.X('Symbol:N', sort='-y'),
-            y='Funding Rate:Q',
-            tooltip=['Symbol', 'Funding Rate']
-        ).properties(width=800, height=400, title=f"Top {top_n} Funding Rates [%]")
 
+        chart = alt.Chart(df).mark_bar(color='royalblue').encode(
+            x=alt.X('Symbol:N', sort='-y',
+                    axis=alt.Axis(title='Symbol', titleColor='royalblue')),
+            y=alt.Y('Funding Rate:Q', axis=alt.Axis(
+                title='Funding Rate (%)', titleColor='royalblue')),
+            tooltip=['Symbol', 'Funding Rate']
+        ).properties(
+            width=800,
+            height=400,
+            title=alt.TitleParams(
+                text=f"Top {top_n} Funding Rates [%]",
+                fontSize=20,
+                color='firebrick',
+                fontWeight='bold'
+            ))
         st.altair_chart(chart, use_container_width=True)
     else:
         pass
@@ -95,10 +121,12 @@ def main():
     default_start_date = datetime.now().date() - timedelta(days=10)
     start_date = st.sidebar.date_input("Start Date", value=default_start_date)
 
+    st.sidebar.markdown("""---""")  # セクションの区切り
+
     st.header("Funding Rate Overview")
     display_funding_rates(selected_exchange[1], top_n)
 
-    st.header("Detailed Funding Rate History")
+    st.header(f"Top {top_n} Funding Rate History")
 
     # 資金調達率が高い順にシンボルを取得
     rates = fetch_all_funding_rate(selected_exchange[1])
@@ -106,7 +134,10 @@ def main():
     top_symbols = [symbol for symbol, rate in rates_sorted[:top_n]]
     # ソートされたシンボルのリストを用いて詳細な履歴を表示
     for symbol in top_symbols:
-        display_funding_rate_history(selected_exchange[1], symbol, start_date)
+        # with st.expander(f"Funding Rate History for {symbol}"):
+        display_funding_rate_history(
+            selected_exchange[1], symbol, start_date)
+        # display_funding_rate_history(selected_exchange[1], symbol, start_date)
 
 
 if __name__ == "__main__":
