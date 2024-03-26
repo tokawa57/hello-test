@@ -2,54 +2,75 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import altair as alt
-
-# Page title
-st.set_page_config(page_title='Interactive Data Explorer Test', page_icon='📊')
-st.title('📊 Interactive Data Explorer Test')
-
-with st.expander('About this app'):
-    st.markdown('**What can this app do?**')
-    st.info('This app shows the use of Pandas for data wrangling, Altair for chart creation and editable dataframe for data interaction.')
-    st.markdown('**How to use the app?**')
-    st.warning('To engage with the app, 1. Select genres of your interest in the drop-down selection box and then 2. Select the year duration from the slider widget. As a result, this should generate an updated editable DataFrame and line plot.')
-
-st.subheader('Which Movie Genre performs ($) best at the box office?')
-
-# Load data
-df = pd.read_csv('data/movies_genres_summary.csv')
-df.year = df.year.astype('int')
-
-# Input widgets
-# Genres selection
-genres_list = df.genre.unique()
-genres_selection = st.multiselect('Select genres', genres_list, [
-                                  'Action', 'Adventure', 'Biography', 'Comedy', 'Drama', 'Horror'])
-
-# Year selection
-year_list = df.year.unique()
-year_selection = st.slider('Select year duration', 1986, 2006, (2000, 2016))
-year_selection_list = list(np.arange(year_selection[0], year_selection[1]+1))
-
-df_selection = df[df.genre.isin(
-    genres_selection) & df['year'].isin(year_selection_list)]
-reshaped_df = df_selection.pivot_table(
-    index='year', columns='genre', values='gross', aggfunc='sum', fill_value=0)
-reshaped_df = reshaped_df.sort_values(by='year', ascending=False)
+import ccxt
+import datetime as dt
 
 
-# Display DataFrame
+def fetch_all_funding_rate(exchange: str) -> dict:
+    ex = getattr(ccxt, exchange)()
+    info = ex.load_markets()
+    perp = [p for p in info if info[p]["linear"]]
+    fr_d = {}
+    for p in perp:
+        try:
+            fr_d[p] = ex.fetch_funding_rate(p)["fundingRate"]
+        except ccxt.ExchangeError:
+            continue  # Consider logging this error
+    return fr_d
 
-df_editor = st.data_editor(reshaped_df, height=212, use_container_width=True,
-                           column_config={
-                               "year": st.column_config.TextColumn("Year")},
-                           num_rows="dynamic")
-df_chart = pd.melt(df_editor.reset_index(), id_vars='year',
-                   var_name='genre', value_name='gross')
 
-# Display chart
-chart = alt.Chart(df_chart).mark_line().encode(
-    x=alt.X('year:N', title='Year'),
-    y=alt.Y('gross:Q', title='Gross earnings ($)'),
-    color='genre:N'
-).properties(height=320)
+def fetch_funding_rate_history(exchange: str, symbol: str) -> tuple:
+    ex = getattr(ccxt, exchange)()
+    funding_history_dict = ex.fetch_funding_rate_history(symbol=symbol)
+    funding_time = [dt.datetime.fromtimestamp(
+        d["timestamp"] * 0.001) for d in funding_history_dict]
+    funding_rate = [d["fundingRate"] * 100 for d in funding_history_dict]
+    return funding_time, funding_rate
+
+
+# exchange = 'bybit'
+
+# Allow the user to select an exchange
+exchange_options = ['bybit', 'mexc']
+exchange = st.selectbox("Select Exchange", options=exchange_options)
+
+
+res_all_funding_rate = fetch_all_funding_rate(exchange=exchange)
+
+res_all_funding_rate_sorted = sorted(
+    res_all_funding_rate.items(), key=lambda x: x[1], reverse=True)
+
+symbols, rates = zip(*res_all_funding_rate_sorted[:20])
+symbols = list(symbols)  # Convert symbols to a list of strings
+
+df = pd.DataFrame({'Symbol': symbols, 'Funding Rate': rates})
+
+st.title("Funding Rate for Symbols")
+chart = alt.Chart(df).mark_bar().encode(
+    x=alt.X('Symbol:N', sort='-y'),
+    y='Funding Rate:Q',
+    tooltip=['Symbol', 'Funding Rate']
+).properties(width=800, height=400)
 st.altair_chart(chart, use_container_width=True)
+
+
+# Loop through each symbol, fetch its funding rate history, and plot individually
+for symbol in symbols:
+    funding_time, funding_rate = fetch_funding_rate_history(
+        exchange=exchange, symbol=symbol)
+    if funding_rate:  # Check if there's data to plot
+        df = pd.DataFrame({
+            'Date': pd.to_datetime(funding_time),
+            'Funding Rate': funding_rate
+        })
+
+        # Plot using Altair
+        chart = alt.Chart(df).mark_line().encode(
+            x='Date:T',
+            y=alt.Y('Funding Rate:Q', axis=alt.Axis(title='Funding Rate (%)')),
+            tooltip=['Date:T', 'Funding Rate:Q']
+        ).properties(width=800, height=400, title=f'Funding Rate for {symbol}').interactive()
+
+        st.altair_chart(chart, use_container_width=True)
+    else:
+        st.write(f"No data available for {symbol}.")
