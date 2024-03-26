@@ -7,18 +7,28 @@ from datetime import datetime, timedelta
 
 @st.cache_data(ttl=600, show_spinner=False)
 def fetch_all_funding_rate(exchange_name: str) -> dict:
-    exchange = getattr(ccxt, exchange_name)()
-    markets = exchange.load_markets()
-    funding_rates = {}
-    for symbol, market in markets.items():
-        if market.get("linear"):  # 線形契約に限定
-            try:
-                funding_rate = exchange.fetch_funding_rate(
-                    symbol)["fundingRate"] * 100  # パーセンテージに変換
-                funding_rates[symbol] = funding_rate
-            except ccxt.ExchangeError:
-                continue  # エラーハンドリングを考慮
-    return funding_rates
+    try:
+        exchange = getattr(ccxt, exchange_name)()
+        markets = exchange.load_markets()
+        funding_rates = {}
+        for symbol, market in markets.items():
+            if market.get("linear"):  # 線形契約に限定
+                try:
+                    funding_rate = exchange.fetch_funding_rate(
+                        symbol)["fundingRate"] * 100  # パーセンテージに変換
+                    funding_rates[symbol] = funding_rate
+                except ccxt.ExchangeError as e:
+                    st.error(
+                        f"Error fetching funding rate for {symbol}: {str(e)}")
+                    continue
+        return funding_rates
+    except Exception as e:
+        # st.error(f"Failed to fetch funding rates: {str(e)}")
+        # st.error(f"{exchange_name} fetch funding rates: {str(e)}")
+        st.error(
+            f"{exchange_name} fetch funding rates: API limits reached, unable to retrieve data. Error: {str(e)}")
+
+        return {}
 
 
 @st.cache_data(ttl=600, show_spinner=False)
