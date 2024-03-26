@@ -1,4 +1,4 @@
 streamlit>=1.26.0
-ccxt=='3.1'
-matplotlib=='3.7'
+ccxt
+matplotlib
 -e git+https://github.com/aoki-h-jp/funding-rate-arbitrage.git#egg=funding-rate-arbitrage
