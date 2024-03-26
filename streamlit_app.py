@@ -5,7 +5,7 @@ import ccxt
 from datetime import datetime, timedelta
 
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=30, show_spinner=False)
 def fetch_all_funding_rate(exchange_name: str) -> dict:
     try:
         exchange = getattr(ccxt, exchange_name)()
@@ -31,7 +31,7 @@ def fetch_all_funding_rate(exchange_name: str) -> dict:
         return {}
 
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def fetch_funding_rate_history(exchange_name: str, symbol: str) -> pd.DataFrame:
     exchange = getattr(ccxt, exchange_name)()
     history = exchange.fetch_funding_rate_history(symbol)
