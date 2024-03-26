@@ -45,8 +45,9 @@ symbols, rates = zip(*res_all_funding_rate_sorted[:20])
 symbols = list(symbols)  # Convert symbols to a list of strings
 
 df = pd.DataFrame({'Symbol': symbols, 'Funding Rate': rates})
+df['Funding Rate'] *= 100
 
-st.title("Funding Rate for Symbols")
+st.title("Funding Rate for Symbols [%]")
 chart = alt.Chart(df).mark_bar().encode(
     x=alt.X('Symbol:N', sort='-y'),
     y='Funding Rate:Q',
