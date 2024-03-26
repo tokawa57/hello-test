@@ -6,8 +6,9 @@ import ccxt
 import datetime as dt
 
 
-def fetch_all_funding_rate(exchange: str) -> dict:
-    ex = getattr(ccxt, exchange)()
+@st.cache_data(ttl=600)
+def fetch_all_funding_rate(exchange_name: str) -> dict:
+    ex = getattr(ccxt, exchange_name)()
     info = ex.load_markets()
     perp = [p for p in info if info[p]["linear"]]
     fr_d = {}
@@ -19,8 +20,9 @@ def fetch_all_funding_rate(exchange: str) -> dict:
     return fr_d
 
 
-def fetch_funding_rate_history(exchange: str, symbol: str) -> tuple:
-    ex = getattr(ccxt, exchange)()
+@st.cache_data(ttl=600)
+def fetch_funding_rate_history(exchange_name: str, symbol: str) -> tuple:
+    ex = getattr(ccxt, exchange_name)()
     funding_history_dict = ex.fetch_funding_rate_history(symbol=symbol)
     funding_time = [dt.datetime.fromtimestamp(
         d["timestamp"] * 0.001) for d in funding_history_dict]
@@ -29,13 +31,12 @@ def fetch_funding_rate_history(exchange: str, symbol: str) -> tuple:
 
 
 # exchange = 'bybit'
-
 # Allow the user to select an exchange
 exchange_options = ['bybit', 'mexc']
-exchange = st.selectbox("Select Exchange", options=exchange_options)
+exchange_name = st.selectbox("Select Exchange", options=exchange_options)
 
 
-res_all_funding_rate = fetch_all_funding_rate(exchange=exchange)
+res_all_funding_rate = fetch_all_funding_rate(exchange_name=exchange_name)
 
 res_all_funding_rate_sorted = sorted(
     res_all_funding_rate.items(), key=lambda x: x[1], reverse=True)
@@ -57,7 +58,7 @@ st.altair_chart(chart, use_container_width=True)
 # Loop through each symbol, fetch its funding rate history, and plot individually
 for symbol in symbols:
     funding_time, funding_rate = fetch_funding_rate_history(
-        exchange=exchange, symbol=symbol)
+        exchange=exchange_name, symbol=symbol)
     if funding_rate:  # Check if there's data to plot
         df = pd.DataFrame({
             'Date': pd.to_datetime(funding_time),
