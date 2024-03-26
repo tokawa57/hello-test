@@ -80,7 +80,7 @@ def display_funding_rates(exchange_name, top_n):
             title=alt.TitleParams(
                 text=f"Top {top_n} Funding Rates [%]",
                 fontSize=20,
-                color='firebrick',
+                color='royalblue',
                 fontWeight='bold'
             ))
         st.altair_chart(chart, use_container_width=True)
