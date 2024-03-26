@@ -17,9 +17,9 @@ def fetch_all_funding_rate(exchange_name: str) -> dict:
                     funding_rate = exchange.fetch_funding_rate(
                         symbol)["fundingRate"] * 100  # パーセンテージに変換
                     funding_rates[symbol] = funding_rate
-                except ccxt.ExchangeError as e:
-                    st.error(
-                        f"Error fetching funding rate for {symbol}: {str(e)}")
+                except ccxt.ExchangeError:
+                    # st.error(
+                    #     f"Error fetching funding rate for {symbol}: {str(e)}")
                     continue
         return funding_rates
     except Exception as e:
