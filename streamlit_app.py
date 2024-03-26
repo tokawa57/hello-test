@@ -5,7 +5,7 @@ import ccxt
 from datetime import datetime, timedelta
 
 
-@st.cache_data(ttl=30, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def fetch_all_funding_rate(exchange_name: str) -> dict:
     try:
         exchange = getattr(ccxt, exchange_name)()
