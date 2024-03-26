@@ -26,7 +26,7 @@ def fetch_all_funding_rate(exchange_name: str) -> dict:
         # st.error(f"Failed to fetch funding rates: {str(e)}")
         # st.error(f"{exchange_name} fetch funding rates: {str(e)}")
         st.error(
-            f"{exchange_name} fetch funding rates: API limits reached, unable to retrieve data. Error: {str(e)}")
+            f"{exchange_name} fetch funding rates: API limits reached, unable to retrieve data.")  # Error: {str(e)}")
 
         return {}
 
