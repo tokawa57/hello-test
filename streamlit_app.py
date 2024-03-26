@@ -62,7 +62,7 @@ def display_funding_rate_history(exchange_name, symbol):
 
 def main():
     st.title("Funding Rate Dashboard")
-    exchange_options = ['bybit', 'mexc']
+    exchange_options = ['bybit', 'mexc', 'okx']
     selected_exchange = st.sidebar.selectbox(
         "Select Exchange", exchange_options)
     top_n = st.sidebar.slider("Select Top N Symbols",
