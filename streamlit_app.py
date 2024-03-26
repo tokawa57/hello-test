@@ -44,19 +44,22 @@ def fetch_funding_rate_history(exchange_name: str, symbol: str) -> pd.DataFrame:
 def display_funding_rates(exchange_name, top_n):
     with st.spinner('Fetching funding rates...'):
         rates = fetch_all_funding_rate(exchange_name)
-    # rates = fetch_all_funding_rate(exchange_name)
-    rates_sorted = sorted(
-        rates.items(), key=lambda x: x[1], reverse=True)[:top_n]
-    symbols, rates = zip(*rates_sorted)
 
-    df = pd.DataFrame({'Symbol': symbols, 'Funding Rate': rates})
-    chart = alt.Chart(df).mark_bar().encode(
-        x=alt.X('Symbol:N', sort='-y'),
-        y='Funding Rate:Q',
-        tooltip=['Symbol', 'Funding Rate']
-    ).properties(width=800, height=400, title=f"Top {top_n} Funding Rates [%]")
+    if rates:  # ratesが空でないことを確認
+        rates_sorted = sorted(
+            rates.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        symbols, rates = zip(*rates_sorted)
 
-    st.altair_chart(chart, use_container_width=True)
+        df = pd.DataFrame({'Symbol': symbols, 'Funding Rate': rates})
+        chart = alt.Chart(df).mark_bar().encode(
+            x=alt.X('Symbol:N', sort='-y'),
+            y='Funding Rate:Q',
+            tooltip=['Symbol', 'Funding Rate']
+        ).properties(width=800, height=400, title=f"Top {top_n} Funding Rates [%]")
+
+        st.altair_chart(chart, use_container_width=True)
+    else:
+        pass
 
 
 def display_funding_rate_history(exchange_name, symbol, start_date):
