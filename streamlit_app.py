@@ -58,7 +58,7 @@ st.altair_chart(chart, use_container_width=True)
 # Loop through each symbol, fetch its funding rate history, and plot individually
 for symbol in symbols:
     funding_time, funding_rate = fetch_funding_rate_history(
-        exchange=exchange_name, symbol=symbol)
+        exchange_name=exchange_name, symbol=symbol)
     if funding_rate:  # Check if there's data to plot
         df = pd.DataFrame({
             'Date': pd.to_datetime(funding_time),
