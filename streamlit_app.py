@@ -109,7 +109,12 @@ def display_funding_rate_history(exchange_name, symbol, start_date):
 def main():
     st.title("Funding Rate Dashboard")
     exchange_options = [('MEXC', 'mexc'),
-                        ('OKX', 'okx'), ('Binance (Works only in a local)', 'binance'), ('Bybit (Works only in a local)', 'bybit'),]
+                        # ('Kucoin', 'kucoinfutures'),
+                        ('OKX', 'okx'),
+                        # ('HTX', 'htx'),
+                        ('Gateio', 'gateio'),
+                        ('Binance (Works only in a local)', 'binance'),
+                        ('Bybit (Works only in a local)', 'bybit'),]
     selected_exchange = st.sidebar.selectbox(
         "Select Exchange", options=exchange_options, format_func=lambda x: x[0])
     # exchange_options = ['bybit', 'mexc', 'okx']
